@@ -9,3 +9,9 @@ UIManager.cs : 팝업 및 페이지를 공통으로 관리할 수 있는 코드�
 CharacterBase.cs / CharacterStateMachine.cs
 
 : Monster와 Player를 공통으로 관리하기 위해서 만든 베이스 코드이다. 상태에 따라 행동이 달라지도록 상태패턴을 이용하여 작업하였다.
+
+유니티 전반적인 작업은 unity CLI 를 이용하여 MCP서버를 연결해서 작업하였다.
+AI는 코덱스를 이용하였고, 스킬은 unity-cli를 사용하면서 
+프리팹 같은 경우에는 unity-ugui 스킬을 사용하였다.
+
+
