@@ -14,4 +14,6 @@ CharacterBase.cs / CharacterStateMachine.cs
 AI는 코덱스를 이용하였고, 스킬은 unity-cli를 사용하면서 
 프리팹 같은 경우에는 unity-ugui 스킬을 사용하였다.
 
+여기에서 사용한 리소스의 경우에는 클로드로 프롬프트 만들어서 나노바나나로 뽑은 것도 있고,
+코덱스의 imagen 이용해서 생성한 것도 있다.
 
