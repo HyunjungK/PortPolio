@@ -125,4 +125,15 @@ HUD는 고정하고 배경/캐릭터만 움직이도록 'BattleWorld' 구조와 
 https://github.com/user-attachments/assets/5207de49-0f1f-4878-8184-338381aecac7
 
 
+## 스테이지
+
+몬스터 생성은 오브젝트 풀링을 사용하였고, 몬스터 움직임은 A* 알고리즘 사용하였습니다.
+레벨업하면서 얻은 스킬 이미지는 GPT6 를 사용하여 제작하였습니다.
+
+
+
+https://github.com/user-attachments/assets/fe0d79b4-231d-4ce4-8325-5848184757d3
+
+
+
 
