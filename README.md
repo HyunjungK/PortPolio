@@ -116,25 +116,90 @@ UI를 정리하는 과정에서는 ScrollView와 GridLayout의 콘텐츠 위치�
 
 ## 코드 하이라이트
 
-### 'StageCameraFollow.cs'
+전투 흐름, 레벨업 규칙, 오브젝트 재사용, 화면 추적을 중심으로 주요 코드를 정리했습니다.
+첨부 파일은 프로젝트에서 발췌한 코드이며, 실행에는 관련 데이터와 다른 프로젝트 코드가 필요합니다.
 
-플레이어 위치를 기준으로 전투 월드 레이어만 이동시키는 카메라 추적 로직입니다.
-HUD는 고정하고 배경/캐릭터만 움직이도록 'BattleWorld' 구조와 함께 사용합니다.
+### 1. 데이터 기반 몬스터 웨이브 관리
 
-### 'CharacterFacing.cs'
+## 관련 코드 : [StageManager.cs](./CodeHighlights/StageManager.cs), [pageStage.cs](./CodeHighlights/pageStage.cs)
 
-캐릭터의 기본 방향과 이동 방향을 기준으로 좌우 플립을 처리합니다.
-공격 중에는 타겟 방향이 우선되도록 상태머신과 연동했습니다.
+스테이지별 몬스터 등장 구성을 데이터로 관리하도록 구현했습니다.
+웨이브 데이터에서 생성 시작·종료 시점, 생성 간격, 최대 생존 수를 읽고, 플레이 중에는 경과 시간과 현재 생존 수를 기준으로 몬스터를 생성합니다.
 
-### 'CharacterAnimationBridge.cs'
+생성 수는 웨이블별 제한과 스테이지 전체 제한을 함께 확인합니다.
+몬스터가 처치되면 활성 목록과 소속 웨이브의 생존 수를 갱신한 뒤 오브젝트 풀로 반환합니다.
+활성 목록에서 제거된 몬스터만 처치 수에 반영하도록 처리했습니다.
 
-상태머신과 AnimatorController 사이를 연결하는 브릿지 컴포넌트입니다.
-'Idle', 'Attack', 'Hit' 애니메이션 호출을 한 곳에 모아 캐릭터 로직을 단순하게 유지했습니다.
+남은 시간과 처치 수는 StageManager 에서 이벤트로 전달하고, pageStage 에서 HUD를 갱신합니다.
+바인딩 대상이 변경되거나 페이지가 닫힐 때는 기존 이벤트 구독을 해제합니다.
 
-### 'CharacterStateMachine.cs'
+## 주요 메서드
 
-전투 시작, 플레이어/몬스터 스폰, 몬스터 리스폰, 스테이지 클리어, 결과 팝업 호출을 담당합니다.
-'pageStage.CharacterRoot'를 통해 캐릭터가 고정 UI가 아닌 'BattleWorld' 아래 생성되도록 변경했습니다.
+- LoadStageRuntimeData : 테이블 데이터를 플레이 중 사용할 웨이브 상태로 구성
+- SpawnWaveMonsters : 생성 시간과 생존 수 제한 확인
+- HandleMonsterDefeated : 활성 목록 정리, 처치 수 갱신, 풀 반환
+- BindStageManager / UnbindStageManager : HUD 이벤트 연결과 해제
+
+### 풀링된 몬스터와 이전 투사체의 타겟 구분
+
+## 관련 코드 : [CharacterBase.cs](./CodeHighlights/CharacterBase.cs), [Projectile.cs](./CodeHighlights/Projectile.cs)
+
+풀에서 재사용하는 몬스터는 반환 전후에 같은 오브젝트 참조를 유지합니다.
+따라서 투사체가 타겟의 존재 여부와 활성 상태만 확인하면, 재사용된 몬스터를 이전 타겟으로 인식할 수 있습니다.
+
+이를 구분하기 위해 캐릭터를 초기화 할 때마다 증가하는 LifeGeneration 값을 사용했습니다.
+투사체는 발사 시점의 타겟과 세대 값을 함께 저장합니다.
+
+추적 중 타겟이 사망하거나 비활성화된 경우 뿐 아니라, 저장한 세대 값과 현재 값이 달라진 경우에도 투사체를 제거합니다.
+같은 오브젝트가 다시 사용되더라도 이전 공격이 계속 추적하지 않도록 처리했습니다.
+
+## 주요 메서드
+
+- CharacterBase.ResetCharacter : 체력·타겟·공격 시간을 초기화하고 세대 값 증가
+- Projectile.Initialize : 발사 시점의 타겟과 세대 값
+- Projectile.Update : 타겟 상태와 세대 값 확인 후 이동·피해 처리
+
+### 3. 레벨업 선택 검증과 공격 방식 분리
+
+## 관련 코드 : [PlayerLoadout.cs](./CodeHighlights/PlayerLoadout.cs), [WeaponStrategies.cs](./CodeHighlights/WeaponStrategies.cs)
+
+무기·패시브의 테이블 정의와 현재 플레이에서 획득한 레벨을 분리했습니다.
+레벨업 후보를 만들 때는 해금 챕터, 최대 레벨, 보유 슬롯 수를 확인합니다.
+무기는 지원하는 공격 방식인지, 다음 레벨 데이터가 존재하는지도 검사합니다.
+
+선택을 적용하는 TryApply 에서도 현재 후보 목록을 기준으로 ID·종류·레벨을 다시 확인합니다.
+이미 적용되어 레벨이 달라진 선택이나 현재 조건에서 사용할 수 없는 선택은 거부합니다.
+
+공격 방식은 IWeaponStrategy 구현으로 나누고, 실행 간격은  WeaponRuntime 에서 관리합니다.
+PlayerLoadout 은 무기 데이터와 강화·패시브 효과를 조합해 공격 수치를 계산하고, 각 공격 구현에 전달합니다.
+
+## 주요 메서드와 타입
+
+- GetAvaliableChoices : 현재 조건에 맞는 무기·패시브 후보 구성
+- TryApply : 선택 유효성 재확인과 보유 레벨 갱신
+- GetWeaponStats : 기본 수치, 강화 배율, 패시브 효과를 조합한 무기 수치 계산
+- IWeaponStrategy : 공격 방식별 실행 인터페이스
+- WeaponRuntime.Tick : 공격 실행과 쿨다운 관리
+
+### 4. 고정 HUD를 유지하는 UGUI 전투 화면 추적
+
+## 관련 코드 : [StageCameraFollow.cs](./CodeHighlights/StageCameraFollow.cs), [pageStage.cs](./CodeHighlights/pageStage.cs)
+
+UGUI 기반 전투 화면에서 플레이어를 따라 화면이 이동하도록 구현했습니다.
+배경과 캐릭터는 BattleWorld 아래에 배치하고, 타이머·체력·경험치 등의 HUD는 고정 영역에 유지했습니다.
+
+StageCameraFollow 는 플레이어 위치를 기준으로 전투 영역의 목표 위치를 계산합니다.
+플레이어를 처음 연결 할 때는 위치를 즉시 맞추고, 이후에는 LateUpdate 에서 시간 간격을 반영한 지수 감쇠 보간으로 이동합니다.
+
+목표 위치는 월드 크기와 표시 영역 크기를 기준으로 제한합니다.
+실제 Camera를 이동시키지 않고 RectTransform.anchoredPosition 을 조정해 기준 UGUI 구조 안에서 추적 화면을 구성했습니다.
+
+## 주요 메서드
+
+- Bind : 추적할 플레이어 연결
+- SnapToTarget : 최초 연결 시 위치 맞춤
+- Follow : 시간 간격을 반영한 부드러운 이동
+- GetClampedCameraOffset : 월드와 표시 영역 크기에 따른 목표 이동 범위 제한
 
 
 
