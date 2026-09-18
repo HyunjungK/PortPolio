@@ -4,11 +4,17 @@ using UnityEngine.UI;
 public class pageStage : UIPage
 {
     [SerializeField] private Slider hpSlider;
+    [SerializeField] private Text hpText;
     [SerializeField] private Slider expSlider;
+    [SerializeField] private Text expText;
     [SerializeField] private RectTransform characterRoot;
     [SerializeField] private StageCameraFollow cameraFollow;
+    [SerializeField] private Text timerText;
+    [SerializeField] private Text monsterCountText;
+    [SerializeField] private Text levelText;
 
     private Player _player;
+    private StageManager _stageManager;
 
     public RectTransform CharacterRoot
     {
@@ -22,17 +28,36 @@ public class pageStage : UIPage
 
     protected override void OnOpened()
     {
-        hpSlider ??= FindSlider("hpSlider");
-        expSlider ??= FindSlider("expSlider");
         cameraFollow ??= GetComponent<StageCameraFollow>();
         if (cameraFollow != null)
             cameraFollow.Initialize(CharacterRoot, transform as RectTransform);
+
+        BindStageManager(FindAnyObjectByType<StageManager>());
         BindPlayer(FindAnyObjectByType<Player>());
     }
 
     protected override void OnClosed()
     {
         UnbindPlayer();
+        UnbindStageManager();
+    }
+
+    public void BindStageManager(StageManager stageManager)
+    {
+        if (_stageManager == stageManager)
+        {
+            RefreshStageHud();
+            return;
+        }
+
+        UnbindStageManager();
+        _stageManager = stageManager;
+        if (_stageManager == null)
+            return;
+
+        _stageManager.StageTimeChanged += OnStageTimeChanged;
+        _stageManager.MonsterCountChanged += OnMonsterCountChanged;
+        RefreshStageHud();
     }
 
     public void BindPlayer(Player player)
@@ -55,6 +80,16 @@ public class pageStage : UIPage
         RefreshSliders();
     }
 
+    private void UnbindStageManager()
+    {
+        if (_stageManager == null)
+            return;
+
+        _stageManager.StageTimeChanged -= OnStageTimeChanged;
+        _stageManager.MonsterCountChanged -= OnMonsterCountChanged;
+        _stageManager = null;
+    }
+
     private void UnbindPlayer()
     {
         if (_player == null)
@@ -66,6 +101,23 @@ public class pageStage : UIPage
         cameraFollow?.Bind(null);
     }
 
+    private void OnStageTimeChanged(float remainingTime, float duration)
+    {
+        if (timerText == null)
+            return;
+
+        int seconds = Mathf.CeilToInt(Mathf.Max(0f, remainingTime));
+        timerText.text = $"{seconds / 60:00}:{seconds % 60:00}";
+    }
+
+    private void OnMonsterCountChanged(int defeatedCount, int targetCount)
+    {
+        if (monsterCountText == null)
+            return;
+
+        monsterCountText.text = targetCount > 0 ? $"KILL {defeatedCount}/{targetCount}" : $"KILL {defeatedCount}";
+    }
+
     private void OnHealthChanged(float health, float maxHealth)
     {
         if (hpSlider == null)
@@ -74,6 +126,8 @@ public class pageStage : UIPage
         hpSlider.minValue = 0f;
         hpSlider.maxValue = maxHealth;
         hpSlider.value = health;
+
+        hpText.text=$"HP {health} / {maxHealth}";
     }
 
     private void OnExperienceChanged(int experience, int experienceToNextLevel)
@@ -84,6 +138,10 @@ public class pageStage : UIPage
         expSlider.minValue = 0f;
         expSlider.maxValue = experienceToNextLevel;
         expSlider.value = experience;
+
+        expText.text=$"EXP {experience}%";
+
+        levelText.text=$"Baker Lv.{_player.Level}";
     }
 
     private void RefreshSliders()
@@ -95,19 +153,13 @@ public class pageStage : UIPage
         OnExperienceChanged(_player.Experience, _player.ExperienceToNextLevel);
     }
 
-    private Slider FindSlider(string sliderName)
+    private void RefreshStageHud()
     {
-        Transform sliderTransform = transform.Find(sliderName);
-        if (sliderTransform != null)
-            return sliderTransform.GetComponent<Slider>();
+        if (_stageManager == null)
+            return;
 
-        foreach (Slider slider in GetComponentsInChildren<Slider>(true))
-        {
-            if (slider.name == sliderName)
-                return slider;
-        }
-
-        return null;
+        OnStageTimeChanged(_stageManager.RemainingTime, _stageManager.Duration);
+        OnMonsterCountChanged(_stageManager.DefeatedMonsterCount, 0);
     }
 
     private RectTransform FindRectTransform(string objectName)
