@@ -22,6 +22,10 @@ AI는 이미지와 테이블 데이터 제작, 코드 수정 및 검증을 보�
 
 ### 플레이 영상
 
+## 기본플로우
+
+https://github.com/user-attachments/assets/f7aca998-780a-4861-9f3e-97ddda429c18
+
 ## 빵 제조 화면 영상
 
 https://github.com/user-attachments/assets/5207de49-0f1f-4878-8184-338381aecac7
