@@ -26,13 +26,6 @@ AI는 이미지와 테이블 데이터 제작, 코드 수정 및 검증을 보�
 
 https://github.com/user-attachments/assets/f7aca998-780a-4861-9f3e-97ddda429c18
 
-## 빵 제조 화면 영상
-
-https://github.com/user-attachments/assets/5207de49-0f1f-4878-8184-338381aecac7
-
-빵 목록을 확인하고 제조하는 화면입니다.
-스크롤 목록에는 SuperScroll을 사용하고, 빵 제조에 사용하는 테이블 데이터와 아이콘을 연결했습니다.
-
 ## 전투 스테이지
 
 https://github.com/user-attachments/assets/fe0d79b4-231d-4ce4-8325-5848184757d3
