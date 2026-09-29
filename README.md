@@ -36,7 +36,7 @@ https://github.com/user-attachments/assets/fe0d79b4-231d-4ce4-8325-5848184757d3
 
 ## 언어변경
 
-https://github.com/user-attachments/assets/51d9d054-2aec-4547-9b2f-257d50366423
+https://github.com/user-attachments/assets/56eb3741-af26-48ec-b529-cb9d473a4a6e
 
 간단하게 한국어, 영어, 일본어 정도만 작업하였습니다.
 언어는 스트링 테이블을 만들어서 작업하였습니다.
